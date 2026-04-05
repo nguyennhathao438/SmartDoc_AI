@@ -1,0 +1,111 @@
+import streamlit as st
+from ui.theme import load_main_style
+from raq.raq import ask_pdf
+
+from db.db import save_message,get_qa_history,get_message_count,update_conversation_title
+from db.session import init_session
+MAX_FILE_SIZE = 10 * 1024 * 1024
+def render_main():
+    init_session()
+    load_main_style()
+
+    # ===== HEADER =====
+    st.markdown("# SmartDoc AI")
+    st.markdown("Phân tích tài liệu thông minh với trí tuệ nhân tạo")
+
+    # ===== UPLOAD =====
+    st.markdown(
+        '<div class="section-title">Tải lên tài liệu</div>',
+        unsafe_allow_html=True
+    )
+
+    uploaded_file = st.file_uploader(
+        "",
+        type=["pdf", "docx", "txt"]
+    )
+    if uploaded_file is not None:
+        if uploaded_file.type != "application/pdf":
+            st.error("Only PDF files are supported.")
+        if uploaded_file.size > MAX_FILE_SIZE:
+            st.error("File quá lớn! Vui lòng tải file nhỏ hơn 10MB.")
+        else:
+            st.success(" File hợp lệ!")
+        
+    #  ===== QUESTION =====
+    st.markdown(
+        '<div class="section-title"> Đặt câu hỏi</div>',
+        unsafe_allow_html=True
+    )
+
+    col1, col2 = st.columns([12, 1])
+
+    with col1:
+        question = st.text_input(
+            "",
+            placeholder="Hỏi bất cứ điều gì về tài liệu của bạn..."
+        )
+
+    with col2:
+        send = st.button("➤")
+
+    # ===== PROCESS =====
+    if send:
+
+        if uploaded_file is None:
+            st.warning("Vui lòng tải tài liệu lên trước")
+
+        elif question == "":
+            st.warning("Vui lòng nhập câu hỏi")
+
+        else:
+
+            # lưu file tạm
+            file_path = f"temp_{uploaded_file.name}"
+
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.read())
+            # tạo progress UI
+            progress_bar = st.progress(0)
+            status = st.empty()
+
+            def update_progress(percent, text):
+                progress_bar.progress(percent)
+                status.text(text)
+            with st.spinner("AI đang phân tích tài liệu..."):
+                response = ask_pdf(file_path, question, progress=update_progress)
+            
+            progress_bar.progress(100)
+            status.empty()
+            save_message(st.session_state.conversation_id, "user", question)
+            save_message(st.session_state.conversation_id, "assistant", response)
+            count = get_message_count(st.session_state.conversation_id)
+
+            if count == 2: 
+                update_conversation_title(st.session_state.conversation_id, question[:50])
+
+            st.session_state.current_answer = response
+            st.session_state.selected_answer = None
+
+            st.rerun()
+# ===== HIỂN THỊ ANSWER (LUÔN HIỂN THỊ) =====
+    st.markdown("---")
+    st.markdown("### Câu trả lời")
+
+    if st.session_state.get("current_answer"):
+        st.markdown(st.session_state.current_answer)
+
+    elif st.session_state.get("selected_answer"):
+        st.markdown(st.session_state.selected_answer)
+
+    else:
+        st.info("Chưa có câu trả lời")
+    
+    history = get_qa_history(st.session_state.conversation_id)
+    if len(history) > 0:      
+        st.markdown("### Lịch sử câu hỏi")
+
+        for i, (q, a) in enumerate(history):
+            if st.button(q, key=f"history_{i}"):
+                st.session_state.selected_answer = a
+                st.session_state.current_answer = None
+                st.rerun()
