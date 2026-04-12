@@ -1,9 +1,11 @@
 import streamlit as st
 from ui.theme import load_main_style
-from raq.raq import ask_pdf
-
+from rag.rag import ask_pdf
+from rag.graph_rag.graphrag import ask_pdf as ask_pdf_graph
 from db.db import save_message,get_qa_history,get_message_count,update_conversation_title
 from db.session import init_session
+from ui.ai_service import run_ai_pipeline
+import json
 MAX_FILE_SIZE = 10 * 1024 * 1024
 def render_main():
     init_session()
@@ -36,7 +38,13 @@ def render_main():
         '<div class="section-title"> Đặt câu hỏi</div>',
         unsafe_allow_html=True
     )
+    st.markdown("###Chọn chế độ trả lời")
 
+    mode = st.radio(
+    "",
+    ["RAG", "GraphRAG"],
+    horizontal=True
+    )   
     col1, col2 = st.columns([12, 1])
 
     with col1:
@@ -47,7 +55,7 @@ def render_main():
 
     with col2:
         send = st.button("➤")
-
+    
     # ===== PROCESS =====
     if send:
 
@@ -72,12 +80,17 @@ def render_main():
                 progress_bar.progress(percent)
                 status.text(text)
             with st.spinner("AI đang phân tích tài liệu..."):
-                response = ask_pdf(file_path, question, progress=update_progress)
+                response = run_ai_pipeline(
+        file_path=file_path,
+        question=question,
+        mode=mode,
+        progress=update_progress
+    )
             
             progress_bar.progress(100)
             status.empty()
             save_message(st.session_state.conversation_id, "user", question)
-            save_message(st.session_state.conversation_id, "assistant", response)
+            save_message(st.session_state.conversation_id, "assistant", json.dumps(response, ensure_ascii=False))
             count = get_message_count(st.session_state.conversation_id)
 
             if count == 2: 
@@ -92,10 +105,12 @@ def render_main():
     st.markdown("### Câu trả lời")
 
     if st.session_state.get("current_answer"):
-        st.markdown(st.session_state.current_answer)
+        answer = st.session_state.current_answer
+        st.markdown(answer)
 
     elif st.session_state.get("selected_answer"):
-        st.markdown(st.session_state.selected_answer)
+        answer = st.session_state.selected_answer
+        st.markdown(answer)
 
     else:
         st.info("Chưa có câu trả lời")
@@ -106,6 +121,12 @@ def render_main():
 
         for i, (q, a) in enumerate(history):
             if st.button(q, key=f"history_{i}"):
-                st.session_state.selected_answer = a
+
+                try:
+                    parsed = json.loads(a)
+                    st.session_state.selected_answer = parsed
+                except:
+                    st.session_state.selected_answer = a
+
                 st.session_state.current_answer = None
                 st.rerun()

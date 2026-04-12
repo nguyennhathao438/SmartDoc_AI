@@ -1,6 +1,6 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-def split_chunks_from_pages(pages_text, chunk_size=1000, chunk_overlap=100):
+def split_chunks_from_pages(pages_text, chunk_size=500, chunk_overlap=50):
 
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
