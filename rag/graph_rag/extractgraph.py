@@ -9,7 +9,7 @@ def extract_graph_documents(
     chunks: List[Document], 
     transformer: LLMGraphTransformer, 
     limit: int = 10, 
-    delay: int = 3
+    delay: int = 0
 ): 
     all_graph_documents = []
     

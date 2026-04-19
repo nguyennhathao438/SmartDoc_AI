@@ -23,7 +23,7 @@ def render_main():
 
     uploaded_file = st.file_uploader(
         "",
-        type=["pdf", "docx", "txt"]
+        type=["pdf"]
     )
     if uploaded_file is not None:
         if uploaded_file.type != "application/pdf":

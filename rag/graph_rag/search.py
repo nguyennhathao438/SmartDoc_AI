@@ -2,39 +2,35 @@ import networkx as nx
 from thefuzz import process, fuzz
 
 def search_graph(
-    question: str,
-    graph: nx.Graph,
-    node_to_texts: dict,
-    hop: int = 1,
-    max_context: int = 20,
-    threshold: int = 60  # Ngưỡng độ tương đồng (0-100)
-) -> str:
-    # 1. Tách từ khóa
-    keywords = [k.lower() for k in question.split() if len(k) > 2]
-    if not keywords:
-        return ""
+    question,
+    graph,
+    node_to_texts,
+    node_vector_store,
+    hop=1,
+    max_context=20
+):
+    results = node_vector_store.similarity_search_with_score(question, k=5)
 
-    all_nodes = list(graph.nodes())
-    seed_nodes = set()
+    # Lấy seed node nhưng đảm bảo tồn tại trong graph
+    seed_nodes = [
+        str(doc.page_content)
+        for doc, _ in results
+        if str(doc.page_content) in graph
+    ]
 
-    # 2. Tìm các "Seed Nodes" sử dụng Fuzzy Matching
-    for k in keywords:
-        # extractBests trả về danh sách (tên_node, score)
-        matches = process.extractBests(k, all_nodes, scorer=fuzz.partial_ratio, score_cutoff=threshold)
-        for match_node, score in matches:
-            seed_nodes.add(match_node)
-
-    # Nếu vẫn không tìm thấy, lấy fallback
+    # fallback nếu không có
     if not seed_nodes:
-        seed_nodes = all_nodes[:3]
+        seed_nodes = list(graph.nodes())[:3]
 
     visited_nodes = set()
     visited_edges = set()
     used_texts = set()
     context_parts = []
 
-    # 3. Duyệt qua từng seed node và mở rộng (Hop)
     for seed in seed_nodes:
+        if seed not in graph:
+            continue
+
         sub_nodes = nx.single_source_shortest_path_length(graph, seed, cutoff=hop)
 
         for node in sub_nodes:
@@ -42,27 +38,30 @@ def search_graph(
                 continue
             visited_nodes.add(node)
 
-            # Lấy thông tin [TEXT]
-            texts = node_to_texts.get(node, [])
-            for text in texts:
-                short_text = text[:300].replace("\n", " ")
+            # TEXT
+            for text in node_to_texts.get(node, []):
+                short_text = text[:300]
+
                 if short_text not in used_texts:
                     used_texts.add(short_text)
-                    context_parts.append(f"[TEXT] {node}: {short_text}...")
-                    break 
+                    context_parts.append(f"[TEXT] {node}: {short_text}")
+                    break
 
-            # Lấy thông tin [GRAPH]
+            # GRAPH
             for neighbor in graph.neighbors(node):
-                edge = tuple(sorted([str(node), str(neighbor)]))
-                if edge not in visited_edges:
-                    visited_edges.add(edge)
-                    rel = graph.get_edge_data(node, neighbor).get("relation", "RELATED_TO")
-                    context_parts.append(f"[GRAPH] {node} --({rel})--> {neighbor}")
+                edge = tuple(sorted((node, neighbor)))  # tối ưu nhẹ
 
-    # 4. Ranking (Sử dụng fuzz.token_set_ratio để xếp hạng context hiệu quả hơn)
-    def calculate_score(item):
-        return fuzz.token_set_ratio(question, item)
+                if edge in visited_edges:
+                    continue
+                visited_edges.add(edge)
 
-    context_parts = sorted(context_parts, key=calculate_score, reverse=True)
+                rel = graph.get_edge_data(node, neighbor).get("relation", "")
+                context_parts.append(f"[GRAPH] {node} [{rel}] {neighbor}")
+
+    def score(x):
+        x = x.lower()
+        return sum(k.lower() in x for k in seed_nodes)
+
+    context_parts = sorted(context_parts, key=score, reverse=True)
 
     return "\n".join(context_parts[:max_context])
