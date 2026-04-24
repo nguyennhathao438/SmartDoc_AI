@@ -8,7 +8,7 @@ from langchain_experimental.graph_transformers import LLMGraphTransformer
 def extract_graph_documents(
     chunks: List[Document], 
     transformer: LLMGraphTransformer, 
-    limit: int = 10, 
+    limit: int = 10,
     delay: int = 3
 ): 
     all_graph_documents = []
