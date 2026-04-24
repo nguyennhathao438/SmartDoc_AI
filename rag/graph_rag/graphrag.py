@@ -1,5 +1,5 @@
 from ..splitter import split_chunks_from_pages
-from ..loader import extract_pages_from_pdf
+from ..loader import extract_content
 from ..prompt import build_prompt_graphrag
 import streamlit as st
 from .extractgraph import extract_graph_documents
@@ -29,7 +29,7 @@ transformer = LLMGraphTransformer(
 def ask_pdf(file_path, question, progress=None):
     if progress:
         progress(10,"Đang đọc PDF ...")
-    pages = extract_pages_from_pdf(file_path)
+    pages = extract_content(file_path)
     if progress:
         progress(30, "Đang chia nhỏ tài liệu...")
     

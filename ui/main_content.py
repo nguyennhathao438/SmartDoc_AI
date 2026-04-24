@@ -23,11 +23,11 @@ def render_main():
 
     uploaded_file = st.file_uploader(
         "",
-        type=["pdf"]
+        type=["pdf","docx"]
     )
     if uploaded_file is not None:
-        if uploaded_file.type != "application/pdf":
-            st.error("Only PDF files are supported.")
+        if uploaded_file.type != "application/pdf" and uploaded_file.type != "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            st.error("Only PDF and DOCX files are supported.")
         if uploaded_file.size > MAX_FILE_SIZE:
             st.error("File quá lớn! Vui lòng tải file nhỏ hơn 10MB.")
         else:
