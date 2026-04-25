@@ -15,6 +15,7 @@ def load_sidebar_style():
         ==========================*/
         section[data-testid="stSidebar"]{
             background:#2C2F33;
+            display:flex;
         }
 
         /* Toàn bộ text sidebar màu trắng */
