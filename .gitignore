@@ -3,3 +3,4 @@
 .env
 chat.db
 venv/
+temp_*.pdf

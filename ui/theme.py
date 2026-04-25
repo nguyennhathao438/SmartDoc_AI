@@ -15,6 +15,7 @@ def load_sidebar_style():
         ==========================*/
         section[data-testid="stSidebar"]{
             background:#2C2F33;
+            display:flex;
         }
 
         /* Toàn bộ text sidebar màu trắng */
@@ -124,6 +125,33 @@ def load_sidebar_style():
         hr{
             margin-top:8px !important;
             margin-bottom:8px !important;
+        }
+
+        section[data-testid="stSidebar"] div.stButton > button {
+            border-radius: 8px !important;
+            text-align: left !important;
+            width: 100% !important;
+            padding: 8px 10px !important;
+            margin: 0 !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            color: white !important;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        section[data-testid="stSidebar"] div.stButton > button:hover {
+            background-color: rgba(255, 255, 255, 0.08) !important;
+            color: white !important;
+        }
+
+        section[data-testid="stSidebar"] div.stButton > button[style] {
+            justify-content: flex-start !important;
+        }
+
+        div[data-testid="column"] {
+            display: flex;
+            align-items: center;
         }
         </style>
         """,

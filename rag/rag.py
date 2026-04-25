@@ -5,6 +5,7 @@ import streamlit as st
 from .splitter import split_chunks_from_pages
 from .loader import extract_pages_from_pdf
 from .prompt import build_prompt
+
 embeddings_model = HuggingFaceEmbeddings(
     model_name="sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
 )

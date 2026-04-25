@@ -48,6 +48,7 @@ Hướng dẫn:
 - Ngữ cảnh gồm 2 loại:
   + [TEXT]&#58; thông tin mô tả
   + [GRAPH]&#58; quan hệ giữa các thực thể (dạng A --(RELATION)--> B)
+- Hãy CHUYỂN các quan hệ GRAPH thành câu tự nhiên (KHÔNG giữ ký hiệu [], --, hoặc RELATION).
 - Ưu tiên sử dụng thông tin từ [GRAPH] để suy luận (vì nó thể hiện quan hệ rõ ràng)
 - Kết hợp với [TEXT] để bổ sung ý nghĩa
 - Trả lời ngắn gọn 3-4 câu bằng tiếng Việt.
@@ -69,6 +70,7 @@ Instructions:
 - Context includes:
   + [TEXT]&#58; descriptive content
   + [GRAPH]&#58; relationships (A --(RELATION)--> B)
+- Convert GRAPH relationships into natural language (DO NOT include [], --, or RELATION).
 - Prioritize reasoning from GRAPH relationships
 - Use TEXT to support explanation
 - Answer in 3-4 sentences clearly

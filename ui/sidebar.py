@@ -45,7 +45,7 @@ def render_sidebar(stats):
             """
             <div class="instruction">
                 <div class="circle">1</div>
-                Tải lên tài liệu (PDF, DOCX, TXT)
+                Tải lên tài liệu PDF
             </div>
 
             <div class="instruction">
@@ -127,35 +127,6 @@ def render_sidebar(stats):
 
         st.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
 
-        st.markdown("""
-        <style>
-        div[data-testid="stButton"] > button {
-    border-radius: 8px !important;
-    text-align: left !important;
-    width: 100% !important;
-
-    padding: 8px 10px !important;
-    margin: 0 !important;
-
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-
-    color: black !important;  
-
-/* Hover */
-div[data-testid="stButton"] > button:hover {
-    background-color: #f0f2f6 !important;
-    color: black !important;   /* FIX chữ */
-}
-
-/* FIX lệch giữa 2 column */
-div[data-testid="column"] {
-    display: flex;
-    align-items: center;
-}
-        </style>
-        """, unsafe_allow_html=True)
         st.markdown('<div class="section-title">LỊCH SỬ TRÒ CHUYỆN</div>', unsafe_allow_html=True)
 
         conversations = get_conversations()
