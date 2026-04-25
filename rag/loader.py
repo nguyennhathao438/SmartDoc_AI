@@ -3,15 +3,21 @@ import docx
 import os
 
 def extract_content(file_path):
+    if not os.path.exists(file_path):
+        raise FileNotFoundError("File không tồn tại")
+
     ext = os.path.splitext(file_path)[-1].lower()
     
     if ext == ".pdf":
-        return extract_pages_from_pdf(file_path)
+        data = extract_pages_from_pdf(file_path)
     elif ext == ".docx":
-        return extract_paragraphs_from_docx(file_path)
+        data = extract_paragraphs_from_docx(file_path)
     else:
-        print(f"Định dạng {ext} chưa được hỗ trợ.")
-        return []
+        raise ValueError(f"Định dạng {ext} chưa được hỗ trợ")
+    if not data:
+        raise ValueError("Không extract được nội dung ")
+
+    return data
 
 def extract_pages_from_pdf(file_path):
     pages_text = []

@@ -15,8 +15,6 @@ def build_faiss_node_index(all_graph_documents, embeddings):
         embedding=embeddings
     )
 
-    node_vector_store.save_local("faiss_node_index")
-
     print(len(unique_nodes))
 
     return node_vector_store

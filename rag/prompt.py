@@ -84,3 +84,52 @@ Context:
 Question:
 {question}
 """
+# CORAG
+def sufficiency_prompt(question, context):
+    try:
+        lang = detect(question)
+    except:
+        lang = 'vi'
+
+    if lang == 'vi':
+        return f"""
+Bạn là một trợ lý đánh giá chất lượng ngữ cảnh.
+ 
+Câu hỏi gốc: {question}
+ 
+Ngữ cảnh hiện tại đã thu thập:
+{context}
+ 
+Hãy đánh giá xem ngữ cảnh trên có đủ để trả lời câu hỏi không.
+Trả lời ĐÚNG theo định dạng JSON sau, KHÔNG thêm gì khác:
+{{
+  "sufficient": true hoặc false,
+  "reason": "lý do ngắn gọn",
+  "refined_query": "câu truy vấn mới nếu cần tìm thêm, để trống nếu đủ rồi"
+}}
+"""
+    else:
+        return f"""
+You are an AI assistant that evaluates whether the provided context is sufficient to answer a question.
+
+Question:
+{question}
+
+Current context:
+{context}
+
+Task:
+- Determine if the context is sufficient to answer the question.
+- If NOT sufficient, suggest a better query to retrieve more relevant information.
+
+Rules:
+- Return ONLY valid JSON (no explanation, no extra text).
+- Keep the reason concise.
+
+Output format:
+{{
+  "sufficient": true or false,
+  "reason": "brief explanation",
+  "refined_query": "improved search query if needed, otherwise empty string"
+}}
+"""

@@ -42,7 +42,7 @@ def render_main():
 
     mode = st.radio(
     "",
-    ["RAG", "GraphRAG"],
+    ["RAG", "GraphRAG", "CoRAG"],
     horizontal=True
     )   
     col1, col2 = st.columns([12, 1])
@@ -80,27 +80,38 @@ def render_main():
                 progress_bar.progress(percent)
                 status.text(text)
             with st.spinner("AI đang phân tích tài liệu..."):
-                response = run_ai_pipeline(
-        file_path=file_path,
-        question=question,
-        mode=mode,
-        progress=update_progress
-    )
-            
-            progress_bar.progress(100)
-            status.empty()
-            save_message(st.session_state.conversation_id, "user", question)
-            save_message(st.session_state.conversation_id, "assistant", json.dumps(response, ensure_ascii=False))
-            count = get_message_count(st.session_state.conversation_id)
+                try:
+                    response = run_ai_pipeline(
+                        file_path=file_path,
+                        question=question,
+                        mode=mode,
+                        progress=update_progress
+                    )
+                    
+                    progress_bar.progress(100)
+                    status.empty()
+                    save_message(st.session_state.conversation_id, "user", question)
+                    save_message(st.session_state.conversation_id, "assistant", json.dumps(response, ensure_ascii=False))
+                    count = get_message_count(st.session_state.conversation_id)
 
-            if count == 2: 
-                update_conversation_title(st.session_state.conversation_id, question[:50])
+                    if count == 2: 
+                        update_conversation_title(st.session_state.conversation_id, question[:50])
 
-            st.session_state.current_answer = response
-            st.session_state.selected_answer = None
+                    st.session_state.current_answer = response
+                    st.session_state.selected_answer = None
 
-            st.rerun()
-# ===== HIỂN THỊ ANSWER (LUÔN HIỂN THỊ) =====
+                    st.rerun()
+                    
+                except ValueError as e:
+                    progress_bar.empty()
+                    status.empty()
+                    st.warning(f" Lỗi: {str(e)}")
+                except Exception as e:
+                    progress_bar.empty()
+                    status.empty()
+                    st.error(f"Có lỗi xảy ra: {str(e)}")
+    
+    # ===== HIỂN THỊ ANSWER (LUÔN HIỂN THỊ) =====
     st.markdown("---")
     st.markdown("### Câu trả lời")
 
