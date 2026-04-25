@@ -3,8 +3,9 @@ from langchain_community.vectorstores import FAISS
 from langchain_ollama import OllamaLLM
 import streamlit as st
 from .splitter import split_chunks_from_pages
-from .loader import extract_pages_from_pdf
+from .loader import extract_content
 from .prompt import build_prompt
+from langchain_core.documents import Document
 
 embeddings_model = HuggingFaceEmbeddings(
     model_name="sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
@@ -15,7 +16,7 @@ def ask_pdf(file_path, question, progress=None):
     if progress:
         progress(10, "Đang đọc PDF...")
 
-    pages = extract_pages_from_pdf(file_path)
+    pages = extract_content(file_path)
 
     if progress:
         progress(30, "Đang chia nhỏ tài liệu...")
@@ -24,12 +25,18 @@ def ask_pdf(file_path, question, progress=None):
     chunk_size=st.session_state.chunk_size,
     chunk_overlap=st.session_state.chunk_overlap)
 
-    texts = [chunk["text"] for chunk in chunks]
+    docs = [
+    Document(
+        page_content=chunk["text"],
+        metadata={"source": chunk["source"]}
+    )
+    for chunk in chunks
+]
 
     if progress:
         progress(60, "Đang tạo embeddings...")
 
-    db = FAISS.from_texts(texts, embeddings_model)
+    db = FAISS.from_documents(docs, embeddings_model)
 
     if progress:
         progress(75, "Đang tìm nội dung liên quan...")
