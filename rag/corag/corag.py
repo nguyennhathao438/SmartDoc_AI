@@ -46,22 +46,6 @@ def ask_pdf_corag(
     k: int = 3,
 ) -> str:
     # ── Phase 1: Indexing ─────────────────────────────────────────────────────
-    # if progress:
-    #     progress(10, "Đang đọc PDF...")
-
-    # pages = extract_content(file_path)
-
-    # if progress:
-    #     progress(25, "Đang chia nhỏ tài liệu...")
-
-    # chunks = split_chunks_from_pages(
-    #     pages,
-    #     chunk_size=st.session_state.chunk_size,
-    #     chunk_overlap=st.session_state.chunk_overlap,
-    # )
-
-    # if progress:
-    #     progress(45, "Đang tạo embeddings...")
 
     db = get_or_create_vector_db(file_path, embeddings_model, progress=progress)
 

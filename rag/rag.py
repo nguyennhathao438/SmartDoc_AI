@@ -77,16 +77,19 @@ def get_or_create_vector_db(file_path, embeddings_model, progress=None):
     return db
 def ask_pdf(file_path, question, progress=None):
 
-    
+    # ── Phase 1: Indexing ─────────────────────────────────────────────────────
     db = get_or_create_vector_db(file_path, embeddings_model, progress=progress)
-
+    # ── Phase 2: Retrieval ─────────────────────────────────────────────────────
     if progress:
         progress(75, "Đang tìm nội dung liên quan...")
 
     docs = db.similarity_search(question, k=3)
-    print("Docs:", docs)
-    context = "\n\n".join([doc.page_content for doc in docs])
-
+    context = "\n\n".join([
+    f"Source: {doc.metadata.get('source')}\nContent: {doc.page_content}"
+    for doc in docs
+])
+    print("Context:", context)
+    # ── Phase 3: Generation ─────────────────────────────────────────────────────
     if progress:
         progress(90, "AI đang tạo câu trả lời...")
 

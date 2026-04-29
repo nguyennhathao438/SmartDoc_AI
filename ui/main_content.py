@@ -38,26 +38,28 @@ def render_main():
         '<div class="section-title"> Đặt câu hỏi</div>',
         unsafe_allow_html=True
     )
-    st.markdown("###Chọn chế độ trả lời")
+    st.markdown("Chọn chế độ trả lời")
 
     mode = st.radio(
     "",
     ["RAG", "GraphRAG", "CoRAG", "SelfRAG"],
     horizontal=True
     )   
-    col1, col2 = st.columns([12, 1])
+    
+    with st.form(key="question_form"):
+        col1, col2 = st.columns([12, 1])
 
-    with col1:
-        question = st.text_input(
-            "",
-            placeholder="Hỏi bất cứ điều gì về tài liệu của bạn..."
-        )
+        with col1:
+            question = st.text_input(
+                "",
+                placeholder="Hỏi bất cứ điều gì về tài liệu của bạn..."
+            )
 
-    with col2:
-        send = st.button("➤")
+        with col2:
+            submitted = st.form_submit_button("➤")
     
     # ===== PROCESS =====
-    if send:
+    if submitted:
 
         if uploaded_file is None:
             st.warning("Vui lòng tải tài liệu lên trước")

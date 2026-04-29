@@ -27,6 +27,7 @@ transformer = LLMGraphTransformer(
     allowed_relationships=["INCLUDES", "DESCRIBES", "IS_EXAMPLE_OF", "APPLIES_TO"]
 )
 def ask_pdf(file_path, question, progress=None):
+    # ── Phase 1: Indexing ─────────────────────────────────────────────────────
     if progress:
         progress(10,"Đang đọc PDF ...")
     pages = extract_content(file_path)
@@ -36,17 +37,20 @@ def ask_pdf(file_path, question, progress=None):
     chunks = split_chunks_from_pages(pages,
     chunk_size=st.session_state.chunk_size,
     chunk_overlap=st.session_state.chunk_overlap)
+    # ── Phase 2: Extract Graph Documents ──────────────────────────────────────
     if progress:
         progress(60, "Đang trích xuất tri thức...")
     graph_docs = extract_graph_documents(chunks, transformer)
     node_mapping = map_nodes_to_source_texts(graph_docs)
     networkx_graph = build_networkx_graph(graph_docs)
     node_vector_store = build_faiss_node_index(graph_docs, embeddings_model)
+    # ── Phase 3: Search Graph ─────────────────────────────────────────────────────
     if progress:
         progress(80, "Đang tìm kiếm thông tin liên quan...")
     context = search_graph(question, networkx_graph, node_mapping, node_vector_store, hop=1, max_context=20)
     if progress:
         progress(90, "AI đang tạo câu trả lời...")
+    # ── Phase 4: Generation ─────────────────────────────────────────────────────
     prompt = build_prompt_graphrag(context, question)
     print("Prompt:", prompt)
     # llm_answer = OllamaLLM(

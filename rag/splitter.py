@@ -8,7 +8,6 @@ def split_chunks_from_pages(pages_text, chunk_size=500, chunk_overlap=50):
     )
 
     chunks = []
-
     for page in pages_text:
         page_chunks = splitter.split_text(page["text"])
 

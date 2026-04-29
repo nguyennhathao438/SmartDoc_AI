@@ -8,18 +8,6 @@ def run_ai_pipeline(file_path, question, mode, progress=None):
     graph_response = None
     corag_response = None
     selfrag_response = None
-    def run_rag():
-        nonlocal rag_response
-        rag_response = ask_pdf(file_path, question,progress=progress)
-
-    def run_graph():
-        nonlocal graph_response
-        graph_response = ask_pdf_graph(file_path, question, progress=progress)
-
-    def run_corag():
-        nonlocal corag_response
-        corag_response = ask_pdf_corag(file_path, question, progress=progress)
-
     if mode == "RAG":
         return ask_pdf(file_path, question,progress=progress)
 
