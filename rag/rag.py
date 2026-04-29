@@ -10,33 +10,75 @@ from langchain_core.documents import Document
 embeddings_model = HuggingFaceEmbeddings(
     model_name="sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
 )
+import os
+import hashlib
+from langchain_community.vectorstores import FAISS
 
-def ask_pdf(file_path, question, progress=None):
+# Thư mục gốc lưu trữ các index local
+INDEX_SAVE_PATH = "storage/vector_indices"
 
+def get_or_create_vector_db(file_path, embeddings_model, progress=None):
+    # 1. Tạo ID duy nhất dựa trên nội dung file (MD5 Hash)
+    hasher = hashlib.md5()
+    with open(file_path, "rb") as f:
+        hasher.update(f.read())
+    file_id = hasher.hexdigest()
+    
+    # Đường dẫn thư mục lưu index của riêng file này
+    save_dir = os.path.join(INDEX_SAVE_PATH, file_id)
+    
+    # 2. Kiểm tra xem Index đã tồn tại chưa
+    if os.path.exists(save_dir):
+        if progress:
+            progress(50, "Đã tìm thấy bản lưu local, đang tải dữ liệu...")
+        
+        # Load index từ ổ cứng
+        db = FAISS.load_local(
+            save_dir, 
+            embeddings_model, 
+            allow_dangerous_deserialization=True
+        )
+        return db
+
+    # 3. Nếu chưa có, tiến hành quy trình xử lý tài liệu từ đầu
     if progress:
-        progress(10, "Đang đọc PDF...")
-
+        progress(10, "Tài liệu mới, đang bắt đầu đọc file...")
+    
+    # Đọc nội dung
     pages = extract_content(file_path)
 
     if progress:
         progress(30, "Đang chia nhỏ tài liệu...")
-
-    chunks = split_chunks_from_pages(pages,
-    chunk_size=st.session_state.chunk_size,
-    chunk_overlap=st.session_state.chunk_overlap)
-
-    docs = [
-    Document(
-        page_content=chunk["text"],
-        metadata={"source": chunk["source"]}
+    
+    # Chia nhỏ chunk
+    chunks = split_chunks_from_pages(
+        pages,
+        chunk_size=st.session_state.chunk_size,
+        chunk_overlap=st.session_state.chunk_overlap
     )
-    for chunk in chunks
-]
+
+    # Chuyển thành LangChain Documents
+    docs = [
+        Document(page_content=chunk["text"], metadata={"source": chunk["source"]})
+        for chunk in chunks
+    ]
 
     if progress:
-        progress(60, "Đang tạo embeddings...")
-
+        progress(60, "Đang tạo embeddings và lưu vào bộ nhớ cục bộ...")
+    
+    # Tạo Vector DB từ docs
     db = FAISS.from_documents(docs, embeddings_model)
+    
+    # LƯU LOCAL để lần sau dùng luôn
+    if not os.path.exists(INDEX_SAVE_PATH):
+        os.makedirs(INDEX_SAVE_PATH)
+    db.save_local(save_dir)
+
+    return db
+def ask_pdf(file_path, question, progress=None):
+
+    
+    db = get_or_create_vector_db(file_path, embeddings_model, progress=progress)
 
     if progress:
         progress(75, "Đang tìm nội dung liên quan...")

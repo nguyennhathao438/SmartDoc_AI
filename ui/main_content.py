@@ -42,7 +42,7 @@ def render_main():
 
     mode = st.radio(
     "",
-    ["RAG", "GraphRAG", "CoRAG"],
+    ["RAG", "GraphRAG", "CoRAG", "SelfRAG"],
     horizontal=True
     )   
     col1, col2 = st.columns([12, 1])

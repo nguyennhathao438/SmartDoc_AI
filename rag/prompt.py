@@ -133,3 +133,100 @@ Output format:
   "refined_query": "improved search query if needed, otherwise empty string"
 }}
 """
+def decomposition_prompt(question):
+    try:
+        lang = detect(question)
+    except:
+        lang = 'vi'
+
+    if lang == 'vi':
+        return f"""
+Bạn là một trợ lý AI chuyên phân rã câu hỏi cho hệ thống CoRAG.
+
+Câu hỏi gốc: {question}
+
+Nhiệm vụ:
+- Chia câu hỏi trên thành tối đa 3 câu hỏi con.
+- Mỗi câu hỏi con phải rõ ràng, độc lập, phục vụ truy xuất thông tin.
+- Các câu hỏi nên bổ sung cho nhau, không trùng lặp.
+- Sắp xếp theo thứ tự logic để giải quyết câu hỏi chính.
+
+Yêu cầu:
+- Trả về ĐÚNG định dạng JSON.
+- Không giải thích thêm.
+
+Output:
+{{
+  "sub_questions": [
+    "câu hỏi 1",
+    "câu hỏi 2",
+    "câu hỏi 3"
+  ]
+}}
+"""
+    else:
+        return f"""
+You are an AI assistant that decomposes a complex question for a CoRAG system.
+
+Original question: {question}
+
+Task:
+- Break the question into up to 3 sub-questions.
+- Each sub-question must be clear, independent, and useful for retrieval.
+- Avoid redundancy.
+- Ensure logical order to progressively answer the main question.
+
+Rules:
+- Return ONLY valid JSON.
+- No explanation, no extra text.
+
+Output:
+{{
+  "sub_questions": [
+    "sub-question 1",
+    "sub-question 2",
+    "sub-question 3"
+  ]
+}}
+"""
+def answer_subquestion_prompt(sub_question, contexts):
+    context_text = "\n\n".join(contexts)
+
+    return f"""
+Bạn là trợ lý AI trả lời câu hỏi dựa trên ngữ cảnh.
+
+Câu hỏi:
+{sub_question}
+
+Ngữ cảnh:
+{context_text}
+
+Yêu cầu:
+- Trả lời CHỈ dựa trên ngữ cảnh
+- Ngắn gọn, rõ ràng
+- Nếu không đủ thông tin → trả lời "Không đủ thông tin"
+
+Câu trả lời:
+"""
+def combine_prompt(question, answers):
+    combined = "\n\n".join(
+        [f"Câu hỏi phụ: {a['sub_question']}\nTrả lời: {a['answer']}" for a in answers]
+    )
+
+    return f"""
+Bạn là một trợ lý AI tổng hợp câu trả lời.
+
+Câu hỏi chính:
+{question}
+
+Các câu trả lời từng phần:
+{combined}
+
+Nhiệm vụ:
+- Tổng hợp thành một câu trả lời hoàn chỉnh, mạch lạc.
+- Không lặp lại ý.
+- Chỉ sử dụng thông tin từ các câu trả lời đã cho.
+- Nếu có phần thiếu thông tin, hãy nói rõ.
+
+Câu trả lời cuối:
+"""

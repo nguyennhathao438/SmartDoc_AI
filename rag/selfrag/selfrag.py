@@ -8,10 +8,9 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 from ..splitter import split_chunks_from_pages
 from ..loader import extract_content
-from ..prompt import combine_prompt
-from .decompose import decompose
-from .search import retrieve_per_subquestion
-from .subanswer import answer_subquestions
+from ..prompt import build_prompt
+
+from .searchloop import run_corag_loop
 from ..rag import get_or_create_vector_db
 load_dotenv()
 
@@ -38,7 +37,7 @@ def _build_faiss(chunks: list[dict]) -> FAISS:
     return FAISS.from_documents(docs, embeddings_model)
 
 
-def ask_pdf_corag(
+def ask_pdf_selfrag(
     file_path: str,
     question: str,
     progress=None,
@@ -46,46 +45,27 @@ def ask_pdf_corag(
     k: int = 3,
 ) -> str:
     # ── Phase 1: Indexing ─────────────────────────────────────────────────────
-    # if progress:
-    #     progress(10, "Đang đọc PDF...")
-
-    # pages = extract_content(file_path)
-
-    # if progress:
-    #     progress(25, "Đang chia nhỏ tài liệu...")
-
-    # chunks = split_chunks_from_pages(
-    #     pages,
-    #     chunk_size=st.session_state.chunk_size,
-    #     chunk_overlap=st.session_state.chunk_overlap,
-    # )
-
-    # if progress:
-    #     progress(45, "Đang tạo embeddings...")
 
     db = get_or_create_vector_db(file_path, embeddings_model, progress=progress)
 
-    # ── Phase 2: Devide sub questions ──────────────────────────────────────
-    if progress:
-        progress(60, "Đang chia thành các câu hỏi con...")
-
-    sub_questions = decompose(question, llm)
-    print("Sub questions:", sub_questions)
-    if progress:
-        progress(85, "AI đang trả lời các câu hỏi con...")
-    
-    retrieved = retrieve_per_subquestion(
-        sub_questions=sub_questions,
-        vectorstore=db,
-        k=3
+    # ── Phase 2: Chain-of-Retrieval loop ──────────────────────────────────────
+    context_buffer = run_corag_loop(
+        db=db,
+        llm=llm,
+        question=question,
+        max_hops=max_hops,
+        k=k,
+        progress=progress,
     )
-    answers = answer_subquestions(retrieved, llm)
 
     # ── Phase 3: Generation ───────────────────────────────────────────────────
     if progress:
-        progress(95, "AI đang tổng hợp câu trả lời...")
+        progress(85, "AI đang tạo câu trả lời...")
 
-    prompt = combine_prompt( question,answers)
+    final_context = "\n\n".join(context_buffer)
+    prompt = build_prompt(final_context, question)
+
+    print(f"[CoRAG] Tổng context: {len(context_buffer)} đoạn | {len(prompt)} chars")
 
     response = llm.invoke(prompt).content
 
