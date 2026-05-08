@@ -47,13 +47,13 @@ langchain-experimental==0.4.1
 langchain-groq==1.1.2
 langchain-huggingface==1.2.1
 langchain-ollama==1.1.0
-langchain-text-splitters==1.1.1
+langchain-text-splitters==1.1.2
 langdetect==1.0.9
 langgraph==1.1.6
 langgraph-checkpoint==4.0.1
 langgraph-prebuilt==1.0.9
 langgraph-sdk==0.3.13
-langsmith==0.7.30
+langsmith==0.7.31
 markdown-it-py==4.0.0
 MarkupSafe==3.0.3
 marshmallow==3.26.2
@@ -96,7 +96,7 @@ pydantic-settings==2.13.1
 pydantic_core==2.41.5
 pydeck==0.9.1
 Pygments==2.20.0
-pypdf==6.10.0
+pypdf==6.10.2
 pypdfium2==5.7.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
